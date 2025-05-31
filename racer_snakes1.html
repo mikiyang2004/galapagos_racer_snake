@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Galápagos Racer Snake Sightings</title>
+
+    <!-- MapLibre and dependencies -->
+    <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.0/jquery.min.js"></script>
+    <script src="https://npmcdn.com/csv2geojson@latest/csv2geojson.js"></script>
+
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script>
+        var map = new maplibregl.Map({
+            container: 'map',
+            style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+            center: [-90.3, -0.7],
+            zoom: 8
+        });
+
+        $(document).ready(function () {
+            $.ajax({
+                type: "GET",
+                url: 'https://docs.google.com/spreadsheets/d/1v4Ii6zce_V-9Boe0uAqu-tewgy_GHGqhtYAPdlimB9Q/gviz/tq?tqx=out:csv',
+                dataType: "text",
+                success: function (csvData) {
+                    console.log("CSV loaded");
+                    makeGeoJSON(csvData);
+                }
+            });
+
+            function makeGeoJSON(csvData) {
+                csv2geojson.csv2geojson(csvData, {
+                    latfield: 'latitude',
+                    lonfield: 'longitude',
+                    delimiter: ','
+                }, function (err, geojson) {
+                    if (err) {
+                        console.error("Error converting CSV to GeoJSON:", err);
+                        return;
+                    }
+
+                    console.log("GeoJSON created", geojson);
+
+                    map.on('load', function () {
+                        map.addLayer({
+                            id: 'points',
+                            type: 'circle',
+                            source: { type: 'geojson', data: geojson },
+                            paint: {
+                                'circle-radius': 6,
+                                'circle-color': 'green'
+                            }
+                        });
+
+                        map.on('click', 'points', function (e) {
+                            var props = e.features[0].properties;
+                            var html = `<h3>${props.place_guess}</h3><p>Accuracy: ${props.positional_accuracy}m</p>`;
+                            new maplibregl.Popup()
+                                .setLngLat(e.lngLat)
+                                .setHTML(html)
+                                .addTo(map);
+                        });
+
+                        map.on('mouseenter', 'points', function () {
+                            map.getCanvas().style.cursor = 'pointer';
+                        });
+                        map.on('mouseleave', 'points', function () {
+                            map.getCanvas().style.cursor = '';
+                        });
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>
