@@ -29,7 +29,8 @@
         $(document).ready(function () {
             $.ajax({
                 type: "GET",
-                url: 'https://docs.google.com/spreadsheets/d/1v4Ii6zce_V-9Boe0uAqu-tewgy_GHGqhtYAPdlimB9Q/gviz/tq?tqx=out:csv',
+                url: 'https://docs.google.com/spreadsheets/d/1v4Ii6zce_V-9Boe0uAqu-tewgy_GHGqhtYAPdlimB9Q/export?format=csv&id=1v4Ii6zce_V-9Boe0uAqu-tewgy_GHGqhtYAPdlimB9Q&gid=0',
+
                 dataType: "text",
                 success: function (csvData) {
                     console.log("CSV loaded");
